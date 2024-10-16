@@ -19,9 +19,9 @@ class FutureWidget extends StatefulWidget {
   1、Future实现异步开发和回调函数实现异步开发不同的地方
   ——————————————————————
   * 定义阶段：
-    * （1）针对异步任务函数的【参数】参来说：原来我们是自定义successCallback、failureCallback等回调函数来上报耗时操作的结果，现在Future对象的宿主对象Completer对象自带了两个函数complete（即成功上报函数）和completeError（即失败上报函数）来让我们上报耗时操作的结果，所以我们不再需要写回调函数这样的参数了
-    * （2）针对异步任务函数的【返回值】参来说：原来是没有返回值的，现在我们需要返回一个Future对象、以便外界监听耗时操作的结果
-    * （3）针对异步任务函数的【执行体】参来说：
+    * （1）针对异步任务函数的【参数】来说：原来我们是自定义successCallback、failureCallback等回调函数来上报耗时操作的结果，现在Future对象的宿主对象Completer对象自带了两个函数complete（即成功上报函数）和completeError（即失败上报函数）来让我们上报耗时操作的结果，所以我们不再需要写回调函数这样的参数了
+    * （2）针对异步任务函数的【返回值】来说：原来是没有返回值的，现在我们需要返回一个Future对象、以便外界监听耗时操作的结果
+    * （3）针对异步任务函数的【执行体】来说：
       * ① 原来我们是把耗时操作直接放在异步任务函数里执行的，现在需要创建一个Future对象并把耗时操作放在Future对象的executor函数里执行（Future对象一旦创建、就会立即执行它的executor函数）
       * ② 原来我们是通过回调函数上报耗时操作的结果的，现在需要通过Future对象的宿主对象Completer对象自带的两个函数complete（即成功上报函数）和completeError（即失败上报函数）来上报耗时操作的结果
   ——————————————————————
@@ -44,7 +44,7 @@ class _FutureWidgetState extends State<FutureWidget> {
     final Completer completer = Completer<int>();
 
     // 我们可以把这里看做是Future对象的executor函数，类似于JS里Future对象的executor函数
-    {
+        {
       // 执行耗时操作...延时模拟耗时操作
       sleep(const Duration(milliseconds: 2000));
 
@@ -68,7 +68,7 @@ class _FutureWidgetState extends State<FutureWidget> {
     final Future<int> future = getDeviceBattery();
     // 监听异步任务的结果
     future.then(
-      (value) {
+          (value) {
         debugPrint("===>获取电量成功：$value");
       },
       onError: (error) {
@@ -89,6 +89,9 @@ class _FutureWidgetState extends State<FutureWidget> {
 
   ——————————————————————
   // （1）定义异步任务函数阶段
+  // 第一步：创建Future、返回Future
+  // 第二步：耗时操作放在Future的executor函数里执行
+  // 第三步：complete上报耗时操作执行成功的数据，completeError上报耗时操作执行失败的错误
   Future<int> asyncFunc() {
     // 创建Future对象
     //
@@ -112,9 +115,9 @@ class _FutureWidgetState extends State<FutureWidget> {
   }
   ——————————————————————
   // （2）调用方异步任务函数阶段
-  // 获取到异步任务函数返回的Future对象
+  // 第一步：获取到异步任务函数返回的Future对象
+  // 第二步：then监听成功的数据和失败的错误
   final Future<int> future = asyncFunc();
-  // 监听异步任务的结果
   future.then(
     (value) {
       // 异步任务执行成功的监听
