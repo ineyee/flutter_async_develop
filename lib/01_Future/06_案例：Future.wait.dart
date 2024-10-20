@@ -2,11 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-// 实际开发中，有时我们可能希望多个异步任务都有结果了，我们再统一做成功的处理，而一旦其中任意一个异步任务失败了，我们就视作失败
-//
-// 比如在蓝牙通信中，我们在获取设备信息时，希望获取设备电量、获取设备Mac地址、获取设备固件版本都成功了，我们才视作设备连接成功，而一旦其中任意一个信息没获取到，我们就视作设备连接失败
-//
-// 此时就可以用Future.wait来非常爽地实现这个需求
 class FutureWaitWidget extends StatefulWidget {
   const FutureWaitWidget({Key? key}) : super(key: key);
 
@@ -14,10 +9,17 @@ class FutureWaitWidget extends StatefulWidget {
   State<FutureWaitWidget> createState() => _FutureWaitWidgetState();
 }
 
+/*
+  实际开发中，有时我们可能希望多个异步耗时操作都有结果了，我们再统一做成功的处理，而一旦其中任意一个异步耗时操作失败了，我们就视作失败
+
+  比如在蓝牙通信中，我们在获取设备信息时，希望获取设备电量、获取设备Mac地址、获取设备固件版本都成功了，我们才视作真正蓝牙连接成功，而一旦其中任意一个信息没获取到，我们就视作蓝牙连接失败
+
+  此时就可以用Future.wait来非常爽地实现这个需求
+ */
 class _FutureWaitWidgetState extends State<FutureWaitWidget> {
   // 记录所有的Completer对象
   final String _getDeviceBatteryCompleterKey = "260101";
-  final String _getDeviceMacAddressCompleterKey = "260102";
+  final String _getDeviceMacAddressCompleterKey = "260202";
   final String _getDeviceFirmwareCompleterKey = "260303";
   final Map<String, Completer> _completerMap = {};
 
@@ -26,7 +28,7 @@ class _FutureWaitWidgetState extends State<FutureWaitWidget> {
     _completerMap[_getDeviceBatteryCompleterKey] = completer;
 
     // 2s超时
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Timer(const Duration(milliseconds: 2000), () {
       if (completer.isCompleted == false) {
         completer.completeError("获取电量超时...");
       }
@@ -40,7 +42,7 @@ class _FutureWaitWidgetState extends State<FutureWaitWidget> {
     _completerMap[_getDeviceMacAddressCompleterKey] = completer;
 
     // 2s超时
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Timer(const Duration(milliseconds: 2000), () {
       if (completer.isCompleted == false) {
         completer.completeError("获取Mac地址超时...");
       }
@@ -54,7 +56,7 @@ class _FutureWaitWidgetState extends State<FutureWaitWidget> {
     _completerMap[_getDeviceFirmwareCompleterKey] = completer;
 
     // 2s超时
-    Future.delayed(const Duration(milliseconds: 2000), () {
+    Timer(const Duration(milliseconds: 2000), () {
       if (completer.isCompleted == false) {
         completer.completeError("获取固件版本超时...");
       }
@@ -67,42 +69,43 @@ class _FutureWaitWidgetState extends State<FutureWaitWidget> {
   // 蓝牙设备给App的响应都是在同一个回调里，这个函数就是模拟那个监听回调
   void _listenDeviceResponse() {
     // 假设1.5s后收到了获取电量的响应
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    Timer(const Duration(milliseconds: 1500), () {
       // 那这里得拿到获取电量那个Completer对象来调用complete
       Completer completer = _completerMap[_getDeviceBatteryCompleterKey]!;
       if (completer.isCompleted == false) {
+        // 成功时
         completer.complete(80);
+        // 失败时
+        // completer.completeError("正在充电，无法获取...");
       }
     });
 
     // 假设1s后收到了获取Mac地址的响应
-    Future.delayed(const Duration(milliseconds: 1000), () {
+    Timer(const Duration(milliseconds: 1000), () {
       // 那这里得拿到获取Mac地址那个Completer对象来调用complete
       Completer completer = _completerMap[_getDeviceMacAddressCompleterKey]!;
       if (completer.isCompleted == false) {
+        // 成功时
         completer.complete("AA:BB:CC:DD:EE:FF");
+        // 失败时
+        // completer.completeError("读取Mac地址出错");
       }
     });
 
-    // 假设5s后收到了获取固件版本的响应，那下面就会连接失败
-    Future.delayed(const Duration(milliseconds: 5000), () {
+    // 假设5s后收到了获取固件版本的响应
+    Timer(const Duration(milliseconds: 2000), () {
       // 那这里得拿到获取固件版本那个Completer对象来调用complete
       Completer completer = _completerMap[_getDeviceFirmwareCompleterKey]!;
       if (completer.isCompleted == false) {
+        // 成功时
         completer.complete(0.9);
+        // 失败时
+        // completer.completeError("读取固件版本出错");
       }
     });
-    // 假设1s后收到了获取固件版本的响应，那下面就会连接成功
-    // Future.delayed(const Duration(milliseconds: 1000), () {
-    //   // 那这里得拿到获取固件版本那个Completer对象来调用complete
-    //   Completer completer = _completerMap[_getDeviceFirmwareCompleterKey]!;
-    //   if (completer.isCompleted == false) {
-    //     completer.complete(0.9);
-    //   }
-    // });
   }
 
-  // 这个异步任务函数里Future.wait这个耗时操作本身就是个Future
+  // 这个异步耗时操作函数里Future.wait这个异步耗时操作本身就返回一个Future
   Future<List<dynamic>> getAllDeviceInfo() {
     Completer completer = Completer<List<dynamic>>();
 
