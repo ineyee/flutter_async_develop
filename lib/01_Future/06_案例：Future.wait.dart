@@ -125,9 +125,15 @@ class _FutureWaitWidgetState extends State<FutureWaitWidget> {
         debugPrint("===>电量：${valueList[0]}");
         debugPrint("===>Mac地址：${valueList[1]}");
         debugPrint("===>固件版本：${valueList[2]}");
+        if (completer.isCompleted == false) {
+          completer.complete(valueList);
+        }
       },
       onError: (error) {
         debugPrint("===>蓝牙连接失败：$error");
+        if (completer.isCompleted == false) {
+          completer.completeError(error);
+        }
       },
     );
 
